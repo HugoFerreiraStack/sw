@@ -57,7 +57,7 @@ lib/
 ├── core/
 │   ├── api/              # Configuração do Dio e Interceptor
 │   ├── auth/             # Autenticação OAuth e storage seguro
-│   └── di/               # Service Locator com GetIt
+│   └── di/               # Injeçao de dependencias
 ├── data/                 # Implementações de repositórios e modelos
 ├── domain/              # Entidades, repositórios abstratos e use cases
 ├── presentation/         # Views (UI) e ViewModels (lógica de apresentação)

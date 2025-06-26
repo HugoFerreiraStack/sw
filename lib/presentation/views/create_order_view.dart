@@ -2,71 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sw/presentation/viewmodels/order_viewmodel.dart';
 
-class CreateOrderView extends StatefulWidget {
+class CreateOrderView extends StatelessWidget {
   const CreateOrderView({super.key});
 
   @override
-  State<CreateOrderView> createState() => _CreateOrderViewState();
-}
-
-class _CreateOrderViewState extends State<CreateOrderView> {
-  final _formKey = GlobalKey<FormState>();
-  final _descriptionController = TextEditingController();
-
-  @override
   Widget build(BuildContext context) {
-    final vm = context.watch<OrderViewModel>();
+    final vm = context.read<OrderViewModel>();
+    final formKey = GlobalKey<FormState>();
+    final descriptionController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Novo Pedido')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Form(
-          key: _formKey,
+          key: formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'Descrição do Pedido',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
               TextFormField(
-                controller: _descriptionController,
+                controller: descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'Descrição do pedido',
                   border: OutlineInputBorder(),
+                  hintText: 'Digite a descrição do pedido',
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Digite uma descrição válida';
+                  if (value == null || value.isEmpty) {
+                    return 'A descrição é obrigatória';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                icon: const Icon(Icons.save),
-                label: vm.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Criar pedido'),
-                onPressed: vm.isLoading
-                    ? null
-                    : () async {
-                        if (_formKey.currentState!.validate()) {
-                          await vm.createOrder(_descriptionController.text);
-                          if (mounted) Navigator.of(context).pop();
-                        }
-                      },
-              )
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() ?? false) {
+                      await vm.createOrder(descriptionController.text);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text('Criar Pedido'),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _descriptionController.dispose();
-    super.dispose();
   }
 }

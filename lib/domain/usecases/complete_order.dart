@@ -5,5 +5,5 @@ class CompleteOrder {
 
   CompleteOrder(this.repository);
 
-  Future<void> call(int id) => repository.completeOrder(id);
+  Future<void> call(String id, String token) => repository.completeOrder(id, token);
 }

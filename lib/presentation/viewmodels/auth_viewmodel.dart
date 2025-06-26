@@ -1,3 +1,6 @@
+
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:sw/core/auth/token_storage.dart';
 import 'package:sw/core/constants/app_constants.dart';
@@ -9,23 +12,29 @@ class AuthViewModel extends ChangeNotifier {
   AuthStatus _status = AuthStatus.loading;
   AuthStatus get status => _status;
 
-  AuthViewModel({required this.tokenStorage});
+  AuthViewModel({required this.tokenStorage}) {
+    loginAutomatic();
+  }
 
   Future<void> loginAutomatic() async {
     try {
-      final token = await tokenStorage.getAccessToken();
-      if (token != null) {
+      final token = await tokenStorage.getToken();
+
+      if (token != null && token.isValid()) {
         _status = AuthStatus.authenticated;
       } else {
         final success = await tokenStorage.loginWithPassword(
           username: AppConstants.userName,
           password: AppConstants.userPassword,
           clientId: 'user',
-          scope: 'offline_access',
+          scope: 'user offline_access',
         );
-        _status = success ? AuthStatus.authenticated : AuthStatus.error;
+        log('Login success: ${success.toJson()}');
+        _status =
+            success.isValid() ? AuthStatus.authenticated : AuthStatus.error;
       }
-    } catch (_) {
+    } catch (e) {
+      log('Login error: $e');
       _status = AuthStatus.error;
     }
 

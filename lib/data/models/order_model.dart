@@ -4,16 +4,18 @@ class OrderModel extends Order {
   OrderModel({
     required super.id,
     required super.description,
-    required super.completed,
+    required super.finished,
     required super.createdAt,
+    super.customerName,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(
       id: json['id'],
       description: json['description'],
-      completed: json['completed'],
+      finished: json['finished']?? false,
       createdAt: DateTime.parse(json['createdAt']),
+      customerName: json['customerName'],
     );
   }
 
@@ -21,8 +23,9 @@ class OrderModel extends Order {
     return {
       'id': id,
       'description': description,
-      'completed': completed,
+      'finished': finished,
       'createdAt': createdAt.toIso8601String(),
+      'customerName': customerName
     };
   }
 }

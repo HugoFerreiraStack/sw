@@ -1,13 +1,15 @@
 class Order {
-  final int id;
+  final String id;
   final String description;
-  final bool completed;
+  final bool? finished;
   final DateTime createdAt;
+  final String? customerName;
 
   Order({
     required this.id,
     required this.description,
-    required this.completed,
+    required this.finished,
     required this.createdAt,
+    this.customerName
   });
 }

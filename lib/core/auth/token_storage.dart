@@ -1,122 +1,90 @@
-// lib/core/auth/token_storage.dart
-import 'package:dio/dio.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sw/core/constants/app_constants.dart';
+import 'package:sw/domain/entities/app_token.dart';
 
 class TokenStorage {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  final Dio dio;
+  final http.Client client;
+  TokenStorage(this.client);
 
-  TokenStorage(this.dio);
+  static const _tokenKey = 'token';
 
-  static const _accessTokenKey = 'access_token';
-  static const _refreshTokenKey = 'refresh_token';
+  /// Salva o token no armazenamento seguro
+  Future<void> saveToken(Token token) async {
+    await _storage.write(key: _tokenKey, value: jsonEncode(token.toJson()));
+  }
 
-  Future<String?> getAccessToken() async =>
-      await _storage.read(key: _accessTokenKey);
-  Future<String?> getRefreshToken() async =>
-      await _storage.read(key: _refreshTokenKey);
+  /// Recupera o token do armazenamento seguro
+  Future<Token?> getToken() async {
+    final tokenJson = await _storage.read(key: _tokenKey);
+    if (tokenJson == null) return null;
+    return Token.fromJson(jsonDecode(tokenJson));
+  }
 
-  Future<void> saveAccessToken(String token) async =>
-      await _storage.write(key: _accessTokenKey, value: token);
-  Future<void> saveRefreshToken(String token) async =>
-      await _storage.write(key: _refreshTokenKey, value: token);
+  /// Remove o token do armazenamento seguro
+  Future<void> clearToken() async {
+    await _storage.delete(key: _tokenKey);
+  }
 
-  Future<bool> loginWithPassword({
+  /// Verifica se o token é válido e renova se necessário
+  Future<Token> ensureValidToken() async {
+    final token = await getToken();
+    if (token == null || !token.isValid()) {
+      return await refreshAccessToken();
+    }
+    return token;
+  }
+
+  /// Realiza o login com nome de usuário e senha
+  Future<Token> loginWithPassword({
     required String username,
     required String password,
     String clientId = 'user',
     String scope = 'user offline_access',
   }) async {
-    try {
-      final response = await dio.post(
-        '/connect/token',
-        options: Options(
-          contentType: Headers.formUrlEncodedContentType,
-        ),
-        data: {
-          'grant_type': 'password',
-          'username': username,
-          'password': password,
-          'client_id': clientId,
-          'scope': scope,
-        },
-      );
+    final response = await client.post(
+      Uri.parse('${AppConstants.baseUrl}/connect/token'),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
+        'grant_type': 'password',
+        'username': username,
+        'password': password,
+        'client_id': clientId,
+        'scope': scope,
+      },
+    );
 
-      final data = response.data;
-      final accessToken = data['access_token'] as String;
-      final refreshToken = data['refresh_token'] as String?;
-
-      await saveAccessToken(accessToken);
-      if (refreshToken != null) {
-        await saveRefreshToken(refreshToken);
-      }
-      return true;
-    } catch (e) {
-      print('Erro loginWithPassword: $e');
-      return false;
-    }
+    final token = Token.fromJson(jsonDecode(response.body));
+    await saveToken(token);
+    return token;
   }
 
-  Future<String> refreshAccessToken({
-    String clientId = 'user',
-  }) async {
-    final refreshToken = await getRefreshToken();
-    if (refreshToken == null) throw Exception('Refresh token not found');
+  /// Renova o token usando o refresh token
+  Future<Token> refreshAccessToken({String clientId = 'user'}) async {
+    final token = await getToken();
+    if (token?.refreshToken == null) {
+      throw Exception('Refresh token não encontrado.');
+    }
 
-    final response = await dio.post(
-      '/connect/token',
-      options: Options(
-        contentType: Headers.formUrlEncodedContentType,
-      ),
-      data: {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/connect/token'),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
         'grant_type': 'refresh_token',
-        'refresh_token': refreshToken,
-        'client_id': clientId,
+        'refresh_token': token!.refreshToken,
+        'client_id': 'user',
+        
       },
     );
 
-    final data = response.data;
-    final accessToken = data['access_token'] as String;
-    final newRefreshToken = data['refresh_token'] as String?;
-
-    await saveAccessToken(accessToken);
-    if (newRefreshToken != null) {
-      await saveRefreshToken(newRefreshToken);
-    }
-
-    return accessToken;
-  }
-
-  Future<void> revokeToken({
-    required String token,
-    required String tokenTypeHint,
-    String clientId = 'user',
-  }) async {
-    await dio.post(
-      '/connect/revocation',
-      options: Options(
-        contentType: Headers.formUrlEncodedContentType,
-      ),
-      data: {
-        'client_id': clientId,
-        'token': token,
-        'token_type_hint': tokenTypeHint,
-      },
-    );
-  }
-
-  Future<void> logout() async {
-    final accessToken = await getAccessToken();
-    final refreshToken = await getRefreshToken();
-
-    if (accessToken != null) {
-      await revokeToken(token: accessToken, tokenTypeHint: 'access_token');
-    }
-    if (refreshToken != null) {
-      await revokeToken(token: refreshToken, tokenTypeHint: 'refresh_token');
-    }
-
-    await _storage.delete(key: _accessTokenKey);
-    await _storage.delete(key: _refreshTokenKey);
+    final newToken = Token.fromJson(jsonDecode(response.body));
+    await saveToken(newToken);
+    return newToken;
   }
 }

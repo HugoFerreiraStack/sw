@@ -6,7 +6,7 @@ class GetOrders {
 
   GetOrders(this.repository);
 
-  Future<List<Order>> call({bool includeFinished = false}) {
-    return repository.getOrders(includeFinished: includeFinished);
+  Future<List<Order>> call({bool includeFinished = false, String? token}) {
+    return repository.getOrders(includeFinished: includeFinished, token: token);
   }
 }

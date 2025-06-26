@@ -13,7 +13,6 @@ Este projeto é uma aplicação Flutter estruturada com arquitetura **MVVM**, **
 | **Flutter 3.27.4** | Base do projeto, multiplataforma, com canal _stable_.                     |
 | **Dart 3.6.2**     | Linguagem principal.                                                      | 
 | **MVVM**           | Arquitetura que separa apresentação, lógica e domínio de forma limpa.     |
-| **Dio**            | Cliente HTTP com `Interceptor` para autenticação e tratamento de erros.   |
 | **OAuth 2.0**      | Autenticação segura com refresh automático via `TokenStorage`.            |
 | **Secure Storage** | Tokens armazenados com segurança usando `flutter_secure_storage`.         |
 | **Provider**       | Gerenciamento de estado leve e escalável.                                 |
@@ -55,7 +54,6 @@ flutter run -d ios        # iOS (com Xcode configurado)
 ```bash
 lib/
 ├── core/
-│   ├── api/              # Configuração do Dio e Interceptor
 │   ├── auth/             # Autenticação OAuth e storage seguro
 │   └── di/               # Injeçao de dependencias
 ├── data/                 # Implementações de repositórios e modelos

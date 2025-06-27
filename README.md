@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este projeto é uma aplicação Flutter estruturada com arquitetura **MVVM**, **OAuth 2.0** para autenticação, consumo de API via **Dio**, gerenciamento de estado com **Provider** e **injeção de dependências com GetIt**.
+Este projeto é uma aplicação Flutter estruturada com arquitetura **MVVM**, **OAuth 2.0** para autenticação, consumo de API via **HTTP**, gerenciamento de estado com **Provider**
 
 ---
 
